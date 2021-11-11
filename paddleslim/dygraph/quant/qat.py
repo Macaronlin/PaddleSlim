@@ -16,7 +16,7 @@ import copy
 import logging
 
 import paddle
-from paddle.fluid.contrib.slim.quantization import ImperativeQuantAware
+from paddle.fluid.contrib.slim.quantization import ImperativeQuantAwareV2, ImperativeQuantAware
 from ...common import get_logger
 
 _logger = get_logger(__name__, level=logging.INFO)
@@ -195,7 +195,7 @@ class QAT(object):
         self.weight_quantize = weight_quantize
         self.act_quantize = act_quantize
 
-        self.imperative_qat = ImperativeQuantAware(
+        self.imperative_qat = ImperativeQuantAwareV2(
             weight_bits=self.config['weight_bits'],
             activation_bits=self.config['activation_bits'],
             weight_quantize_type=self.config['weight_quantize_type'],

@@ -18,20 +18,20 @@ import logging
 import paddle
 import paddle.nn as nn
 import paddle.fluid.contrib.slim.quantization as Q
-from paddle.fluid.contrib.slim.quantization import AbsmaxQuantizer
-from paddle.fluid.contrib.slim.quantization import HistQuantizer
-from paddle.fluid.contrib.slim.quantization import KLQuantizer
-from paddle.fluid.contrib.slim.quantization import PerChannelAbsmaxQuantizer
+#from paddle.fluid.contrib.slim.quantization import AbsmaxQuantizer
+#from paddle.fluid.contrib.slim.quantization import HistQuantizer
+#from paddle.fluid.contrib.slim.quantization import KLQuantizer
+#from paddle.fluid.contrib.slim.quantization import PerChannelAbsmaxQuantizer
 from ...common import get_logger
 
 _logger = get_logger(__name__, level=logging.INFO)
 
 __all__ = [
     'PTQ',
-    'AbsmaxQuantizer',
-    'HistQuantizer',
-    'KLQuantizer',
-    'PerChannelAbsmaxQuantizer',
+#    'AbsmaxQuantizer',
+#    'HistQuantizgger',
+#    'KLQuantizer',
+#    'PerChannelAbsmaxQuantizer',
 ]
 
 

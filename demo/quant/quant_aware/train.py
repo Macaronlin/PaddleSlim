@@ -143,21 +143,55 @@ def compress(args):
     #    According to the weight and activation quantization type, the graph will be added
     #    some fake quantize operators and fake dequantize operators.
     ############################################################################################################
-    val_program = quant_aware(
+    quant_val_program = quant_aware(
         val_program, place, quant_config, scope=None, for_test=True)
-    compiled_train_prog = quant_aware(
-        train_prog, place, quant_config, scope=None, for_test=False)
+
+    train_prog = quant_aware(
+        train_prog, place, quant_config, scope=None, for_test=False, return_program=True)
     opt = create_optimizer(args)
     opt.minimize(avg_cost)
 
     exe = paddle.static.Executor(place)
     exe.run(paddle.static.default_startup_program())
 
-    assert os.path.exists(
-        args.pretrained_model), "pretrained_model doesn't exist"
+    float_path = "./outputs"
 
-    if args.pretrained_model:
-        paddle.static.load(train_prog, args.pretrained_model, exe)
+    paddle.fluid.io.save_inference_model(
+        dirname="./outpus",
+        feeded_var_names=[image.name],
+        target_vars=[out],
+        executor=exe,
+        main_program=quant_val_program,
+        model_filename=float_path + '/before_convert.pdmodel',
+        params_filename=float_path + '/params')
+
+
+    float_program, int8_program = convert(quant_val_program, place, quant_config, \
+                                                        scope=None, \
+                                                        save_int8=True)
+    paddle.fluid.io.save_inference_model(
+        dirname="./outpus",
+        feeded_var_names=[image.name],
+        target_vars=[out],
+        executor=exe,
+        main_program=float_program,
+        model_filename=float_path + '/after_convert.pdmodel',
+        params_filename=float_path + '/params')
+
+
+    sys.exit(0)
+
+
+
+    path_state_dict = 'temp/model.pdparams'
+    paddle.static.save(val_program, path_state_dict, protocol=4)
+#    paddle.save(train_prog.state_dict("param"), path_state_dict)
+#    fluid.io.save_persistables(exe, "checkpoint", compiled_train_prog)
+#    assert os.path.exists(
+#        args.pretrained_model), "pretrained_model doesn't exist"
+
+#    if args.pretrained_model:
+#        paddle.static.load(train_prog, args.pretrained_model, exe)
 
     places = paddle.static.cuda_places(
     ) if args.use_gpu else paddle.static.cpu_places()
@@ -232,6 +266,7 @@ def compress(args):
     build_strategy.fuse_all_reduce_ops = False
     build_strategy.sync_batch_norm = False
     exec_strategy = paddle.static.ExecutionStrategy()
+    compiled_train_prog = paddle.static.CompiledProgram(train_prog)
     compiled_train_prog = compiled_train_prog.with_data_parallel(
         loss_name=avg_cost.name,
         build_strategy=build_strategy,

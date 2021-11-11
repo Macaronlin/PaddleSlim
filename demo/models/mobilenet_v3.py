@@ -15,6 +15,7 @@ __all__ = [
 
 class MobileNetV3():
     def __init__(self, scale=1.0, model_name='small'):
+        print("init mobilenetv3------------------------")
         self.scale = scale
         self.inplanes = 16
         if model_name == "large":
@@ -59,6 +60,7 @@ class MobileNetV3():
             raise NotImplementedError
 
     def net(self, input, class_dim=1000):
+        print("mobilenetv3 net-------------------------")
         scale = self.scale
         inplanes = self.inplanes
         cfg = self.cfg
@@ -77,6 +79,7 @@ class MobileNetV3():
             if_act=True,
             act='hard_swish',
             name='conv1')
+
         i = 0
         for layer_cfg in cfg:
             conv = self.residual_unit(

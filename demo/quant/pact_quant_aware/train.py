@@ -285,6 +285,16 @@ def compress(args):
         optimizer_func=optimizer_func,
         executor=executor,
         for_test=True)
+
+
+    for param in val_program.global_block().all_parameters():
+        print(f"param: {param}")
+
+    print(f"program type: {type(val_program)}")
+    paddle.static.save(val_program, "./temp")
+
+    return
+
     compiled_train_prog = quant_aware(
         train_prog,
         place,

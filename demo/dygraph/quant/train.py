@@ -36,6 +36,8 @@ sys.path.append(os.path.join(os.path.dirname("__file__")))
 from optimizer import create_optimizer
 sys.path.append(
     os.path.join(os.path.dirname("__file__"), os.path.pardir, os.path.pardir))
+
+print(f"sys.path: {sys.path}")
 from utility import add_arguments, print_arguments
 from models.dygraph.mobilenet_v3 import MobileNetV3_large_x1_0
 
@@ -74,8 +76,8 @@ def load_dygraph_pretrain(model, path=None, load_static_weights=False):
         for key in model_dict.keys():
             weight_name = model_dict[key].name
             if weight_name in pre_state_dict.keys():
-                print('Load weight: {}, shape: {}'.format(
-                    weight_name, pre_state_dict[weight_name].shape))
+#                print('Load weight: {}, shape: {}'.format(
+#                    weight_name, pre_state_dict[weight_name].shape))
                 param_state_dict[key] = pre_state_dict[weight_name]
             else:
                 param_state_dict[key] = model_dict[key]
@@ -125,7 +127,7 @@ def compress(args):
     else:
         raise ValueError("{} is not supported.".format(args.model))
     _logger.info("Origin model summary:")
-    paddle.summary(net, (1, 3, 224, 224))
+#    paddle.summary(net, (1, 3, 224, 224))
 
     ############################################################################################################
     # 1. quantization configs
@@ -163,7 +165,18 @@ def compress(args):
     quanter = QAT(config=quant_config)
     quanter.quantize(net)
 
-    _logger.info("QAT model summary:")
+
+    path = os.path.join(args.model_save_dir, "inference_model", 'qat_model')
+    quanter.save_quantized_model(
+        net,
+        path,
+        input_spec=[
+            paddle.static.InputSpec(
+                shape=[None, 3, 224, 224], dtype='float32')
+        ])
+
+    return
+#    _logger.info("QAT model summary:")
     paddle.summary(net, (1, 3, 224, 224))
 
     opt, lr = create_optimizer(net, trainer_num, args)
@@ -178,7 +191,7 @@ def compress(args):
         batch_sampler=train_batch_sampler,
         places=place,
         return_list=True,
-        num_workers=4)
+        num_workers=1)
 
     valid_loader = paddle.io.DataLoader(
         val_dataset,
@@ -187,7 +200,14 @@ def compress(args):
         shuffle=False,
         drop_last=False,
         return_list=True,
-        num_workers=4)
+        num_workers=1)
+
+
+
+#    model_prefix = os.path.join(args.model_save_dir, "step_" + str(773))
+#    net.set_dict(paddle.load(model_prefix + ".pdparams"))
+#    opt.set_dict(paddle.load(model_prefix + ".pdopt"))
+
 
     @paddle.no_grad()
     def test(epoch, net):
@@ -304,6 +324,25 @@ def compress(args):
                 train_reader_cost = 0.0
                 train_run_cost = 0.0
                 total_samples = 0
+
+#            sys.exit(0) 
+#            if batch_id > 0 and batch_id < 2:
+#                model_prefix = os.path.join(args.model_save_dir, "step_" + str(batch_id))
+#                paddle.save(net.state_dict(), model_prefix + ".pdparams")
+#                paddle.save(opt.state_dict(), model_prefix + ".pdopt")
+#                path = os.path.join(args.model_save_dir, "inference_model", str(batch_id))
+#                #model_prefix = os.path.join(args.model_save_dir, "inference_model", str(batch_id), f"{batch_id}.pdparams")
+#                #paddle.save(net.state_dict(), model_prefix)
+#                quanter.save_quantized_model(
+#                    net,
+#                    path,
+#                    input_spec=[
+#                        paddle.static.InputSpec(
+#                            shape=[None, 3, 224, 224], dtype='float32')
+#                    ])
+
+#            if batch_id > 10:
+#                sys.exit(0) 
             batch_id += 1
             reader_start = time.time()
 

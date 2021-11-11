@@ -159,9 +159,10 @@ class MobileNetV3(nn.Layer):
 
     def forward(self, inputs, label=None):
         x = self.conv1(inputs)
-
+        i=0
         for block in self.block_list:
             x = block(x)
+            i += 1
 
         x = self.last_second_conv(x)
         x = self.pool(x)
